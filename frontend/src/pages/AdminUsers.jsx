@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import axiosClient from '../api/axiosClient';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
+import Pagination from '../components/Pagination';
 import {
   UserIcon,
   CheckCircleIcon,
@@ -18,17 +19,46 @@ const AdminUsers = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterApproved, setFilterApproved] = useState('all');
+  
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(30);
+  const [pagination, setPagination] = useState({
+    total_users: 0,
+    total_pages: 1,
+    has_next: false,
+    has_previous: false,
+  });
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [page, pageSize]);
 
   const fetchUsers = async () => {
+    setLoading(true);
     try {
-      const response = await axiosClient.get('/auth/users/');
-      setUsers(response.data);
+      const response = await axiosClient.get(`/auth/users/?page=${page}&page_size=${pageSize}`);
+      
+      // Handle both old format (array) and new format (paginated object)
+      if (Array.isArray(response.data)) {
+        setUsers(response.data);
+        setPagination({
+          total_users: response.data.length,
+          total_pages: 1,
+          has_next: false,
+          has_previous: false,
+        });
+      } else {
+        setUsers(response.data.results || []);
+        setPagination({
+          total_users: response.data.total_users || 0,
+          total_pages: response.data.total_pages || 1,
+          has_next: response.data.has_next || false,
+          has_previous: response.data.has_previous || false,
+        });
+      }
     } catch (error) {
-      toast.error('Error fetching users');
+      toast.error(error.response?.data?.error || 'Error fetching users');
       console.error('Error:', error);
     } finally {
       setLoading(false);
@@ -41,10 +71,21 @@ const AdminUsers = () => {
         is_approved: !currentStatus,
       });
       toast.success(`User ${!currentStatus ? 'approved' : 'revoked'} successfully`);
-      fetchUsers();
+      fetchUsers(); // Refetch to update the list
     } catch (error) {
       toast.error(error.response?.data?.error || 'Error updating user status');
     }
+  };
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+    // Scroll to top of table
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handlePageSizeChange = (newPageSize) => {
+    setPageSize(newPageSize);
+    setPage(1); // Reset to page 1 when page size changes
   };
 
   const filteredUsers = users.filter((user) => {
@@ -62,21 +103,16 @@ const AdminUsers = () => {
     return matchesSearch && matchesFilter;
   });
 
+  // Calculate stats from current page (for display) and total from API
   const stats = {
-    total: users.length,
+    total: pagination.total_users,
     approved: users.filter((u) => u.profile.is_approved).length,
     pending: users.filter((u) => !u.profile.is_approved).length,
     staff: users.filter((u) => u.is_staff).length,
     superuser: users.filter((u) => u.is_superuser).length,
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-600"></div>
-      </div>
-    );
-  }
+  // Loading skeleton will be shown in the table
 
   return (
     <div>
@@ -185,7 +221,37 @@ const AdminUsers = () => {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredUsers.length === 0 ? (
+              {loading ? (
+                // Loading skeleton
+                Array.from({ length: pageSize }).map((_, index) => (
+                  <tr key={`skeleton-${index}`} className="animate-pulse">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        <div className="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600"></div>
+                        <div className="ml-4 space-y-2">
+                          <div className="h-4 w-32 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                          <div className="h-3 w-48 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-6 w-20 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-6 w-16 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 w-20 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-8 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                    </td>
+                  </tr>
+                ))
+              ) : filteredUsers.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                     No users found
@@ -274,7 +340,7 @@ const AdminUsers = () => {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {user.profile.is_portfolio_published ? (
+                      {user.profile.portfolio_published ? (
                         <a
                           href={`/${user.profile.username_slug || user.username}`}
                           target="_blank"
@@ -322,6 +388,19 @@ const AdminUsers = () => {
           </table>
         </div>
       </div>
+
+      {/* Pagination */}
+      {pagination.total_pages > 0 && (
+        <Pagination
+          currentPage={page}
+          totalPages={pagination.total_pages}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+          totalItems={pagination.total_users}
+          loading={loading}
+        />
+      )}
     </div>
   );
 };

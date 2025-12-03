@@ -501,7 +501,7 @@ def current_user(request):
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def list_users(request):
-    """List all users (staff/superuser only)"""
+    """List all users with pagination (staff/superuser only)"""
     if not (request.user.is_staff or request.user.is_superuser):
         return Response(
             {'error': 'You do not have permission to view all users.'},
@@ -509,12 +509,54 @@ def list_users(request):
         )
     
     from django.contrib.auth import get_user_model
+    from math import ceil
     User = get_user_model()
     
-    users = User.objects.all().order_by('-date_joined')
-    user_data = []
+    # Allowed page sizes
+    ALLOWED_PAGE_SIZES = [10, 30, 50, 70, 100]
     
-    for user in users:
+    # Get pagination parameters
+    try:
+        page = int(request.GET.get('page', 1))
+        if page < 1:
+            page = 1
+    except (ValueError, TypeError):
+        page = 1
+    
+    try:
+        page_size = int(request.GET.get('page_size', 30))
+        if page_size not in ALLOWED_PAGE_SIZES:
+            return Response(
+                {
+                    'error': f'Invalid page_size. Allowed values are: {", ".join(map(str, ALLOWED_PAGE_SIZES))}'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    except (ValueError, TypeError):
+        page_size = 30
+    
+    # Get all users
+    users_queryset = User.objects.all().order_by('-date_joined')
+    total_users = users_queryset.count()
+    
+    # Calculate pagination
+    total_pages = ceil(total_users / page_size) if total_users > 0 else 1
+    
+    # Ensure page is within valid range
+    if page > total_pages and total_pages > 0:
+        page = total_pages
+    
+    has_next = page < total_pages
+    has_previous = page > 1
+    
+    # Apply pagination
+    start_index = (page - 1) * page_size
+    end_index = start_index + page_size
+    paginated_users = users_queryset[start_index:end_index]
+    
+    # Serialize users
+    user_data = []
+    for user in paginated_users:
         try:
             profile = user.profile
         except UserProfile.DoesNotExist:
@@ -539,7 +581,15 @@ def list_users(request):
             }
         })
     
-    return Response(user_data)
+    return Response({
+        'results': user_data,
+        'total_users': total_users,
+        'page': page,
+        'page_size': page_size,
+        'total_pages': total_pages,
+        'has_next': has_next,
+        'has_previous': has_previous,
+    })
 
 
 @api_view(['PATCH'])
