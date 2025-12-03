@@ -1,7 +1,7 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+const API_BASE_URL = 'https://muneza12.pythonanywhere.com/api/v1';
 
 const axiosClient = axios.create({
   baseURL: API_BASE_URL,
