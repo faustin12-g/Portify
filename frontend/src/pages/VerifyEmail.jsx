@@ -35,7 +35,7 @@ const VerifyEmail = () => {
         if (response.data.already_used) {
           setMessage(response.data.message || 'This verification link has already been used. If your email was successfully verified, you can proceed to login.');
         } else {
-          setMessage(response.data.message || 'Email verified successfully! Your account is pending admin approval.');
+          setMessage(response.data.message || 'Email verified successfully!');
         }
       } else {
         setStatus('error');
@@ -94,12 +94,6 @@ const VerifyEmail = () => {
               Email Verified!
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mb-6">{message}</p>
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-6 text-left">
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                <strong>What's next?</strong> Your account is pending admin approval. You will
-                receive an email notification once your account has been reviewed and approved.
-              </p>
-            </div>
             <button
               onClick={() => navigate('/login')}
               className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all"

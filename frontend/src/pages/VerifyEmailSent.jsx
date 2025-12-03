@@ -23,11 +23,6 @@ const VerifyEmailSent = () => {
           </p>
         </div>
 
-        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-6">
-          <p className="text-sm text-gray-700 dark:text-gray-300">
-            Please click the link in the email to verify your account. Once verified, your account will be pending admin approval.
-          </p>
-        </div>
 
         <div className="space-y-4">
           <Link

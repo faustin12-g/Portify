@@ -10,7 +10,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     username_slug = models.SlugField(max_length=100, unique=True, blank=True, null=True, help_text='Unique URL slug for portfolio (e.g., /username)')
     portfolio_published = models.BooleanField(default=False, help_text='Whether the portfolio is publicly accessible')
-    is_approved = models.BooleanField(default=False, help_text='Admin approval required before user can access dashboard')
+    is_approved = models.BooleanField(default=True, help_text='Admin approval required before user can access dashboard')
     email_verified = models.BooleanField(default=False, help_text='Email verification status')
     email_verification_token = models.CharField(max_length=100, blank=True, null=True)
     banner_image = models.ImageField(upload_to='banners/', blank=True, null=True, help_text='Portfolio banner/header image')

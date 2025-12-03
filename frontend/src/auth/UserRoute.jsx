@@ -31,7 +31,6 @@ const UserRoute = ({ children }) => {
         
         if (!profile.is_approved) {
           setIsApproved(false);
-          toast.error('Your account is pending admin approval.');
         } else {
           setIsApproved(true);
         }
