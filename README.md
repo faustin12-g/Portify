@@ -2,7 +2,7 @@
 
 A modern, full-stack portfolio platform that allows multiple users to create, manage, and publish their personal portfolios. Built with Django REST Framework backend and React frontend.
 
-## 🚀 Features
+## Features
 
 ### Core Features
 - **Multi-User System**: Each user can create and manage their own portfolio
@@ -31,7 +31,7 @@ A modern, full-stack portfolio platform that allows multiple users to create, ma
 - **Message Management**: View and manage all contact messages
 - **User Profiles**: Detailed view of individual user portfolios
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Backend
 - Django 4.x
@@ -52,14 +52,14 @@ A modern, full-stack portfolio platform that allows multiple users to create, ma
 - React Hot Toast (Notifications)
 - Heroicons
 
-## 📋 Prerequisites
+## Prerequisites
 
 - Python 3.8 or higher
 - Node.js 16 or higher
 - npm or yarn
 - pip
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Backend Setup
 
@@ -72,7 +72,7 @@ cd backend
 ```bash
 # Windows
 python -m venv venv
-.\venv\Scripts\Activate.ps1
+.\venv\Scripts\Activate
 
 # Linux/Mac
 python -m venv venv
@@ -120,7 +120,7 @@ npm run dev
 
 The app will be available at `http://localhost:3000`
 
-## 📚 API Documentation
+## API Documentation
 
 ### Swagger UI
 
@@ -132,7 +132,7 @@ Access interactive API documentation at:
 
 All API endpoints are prefixed with `/api/v1/`
 
-## 🔐 Authentication
+## Authentication
 
 ### User Registration
 - **Endpoint:** `POST /api/v1/auth/register/`
@@ -160,7 +160,7 @@ Include the token in the Authorization header:
 Authorization: Bearer <your_access_token>
 ```
 
-## 📋 API Endpoints
+## API Endpoints
 
 ### Authentication
 - `POST /api/v1/auth/register/` - Register new user
@@ -199,7 +199,7 @@ Authorization: Bearer <your_access_token>
 - `GET /api/v1/auth/profile/` - Get user profile
 - `PATCH /api/v1/auth/profile/` - Update profile (publish/unpublish portfolio)
 
-## 🧪 Testing Endpoints
+## Testing Endpoints
 
 ### Using cURL
 
@@ -247,7 +247,7 @@ curl http://localhost:8000/api/v1/portfolio/username/
 3. Enter: `Bearer YOUR_ACCESS_TOKEN`
 4. Test endpoints directly from the UI
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 .
@@ -289,7 +289,7 @@ curl http://localhost:8000/api/v1/portfolio/username/
     └── vite.config.js
 ```
 
-## 🔒 Permissions
+## Permissions
 
 - **Public (Read-only):** Public portfolio pages and GET requests
 - **Authenticated (Write):** Users can only manage their own content
@@ -298,7 +298,7 @@ curl http://localhost:8000/api/v1/portfolio/username/
   - `IsAuthenticatedOrReadOnly` for public endpoints
   - `IsAuthenticated` for user-specific endpoints
 
-## 📸 Media Files
+## Media Files
 
 - Media files are stored in `backend/media/` directory
 - Images are organized by type:
@@ -309,7 +309,7 @@ curl http://localhost:8000/api/v1/portfolio/username/
   - Logo images: `/media/logo/`
   - Banner images: `/media/banners/`
 
-## 📧 Email Configuration
+## Email Configuration
 
 The platform sends automated emails for:
 - Email verification
@@ -329,7 +329,7 @@ EMAIL_HOST_PASSWORD = 'your-app-password'
 DEFAULT_FROM_EMAIL = 'your-email@gmail.com'
 ```
 
-## 🗄️ Database
+## Database
 
 Currently using SQLite (default Django database). To migrate to PostgreSQL:
 
@@ -337,7 +337,7 @@ Currently using SQLite (default Django database). To migrate to PostgreSQL:
 2. Update `backend/backend/settings.py` DATABASES configuration
 3. Run migrations: `python manage.py migrate`
 
-## 🛠️ Development
+## Development
 
 ### Running Migrations
 
@@ -367,7 +367,7 @@ npm run build
 
 The build output will be in the `frontend/dist/` directory.
 
-## 📝 Environment Variables
+## Environment Variables
 
 For production, set these in your environment or use a `.env` file:
 
@@ -379,7 +379,7 @@ For production, set these in your environment or use a `.env` file:
 - `EMAIL_HOST_USER` - Email address for sending emails
 - `EMAIL_HOST_PASSWORD` - Email password or app password
 
-## 🚀 Deployment Notes
+## Deployment Notes
 
 1. Set `DEBUG = False` in production
 2. Configure `ALLOWED_HOSTS`
@@ -392,7 +392,7 @@ For production, set these in your environment or use a `.env` file:
 9. Set up SSL/HTTPS
 10. Configure proper logging
 
-## 🎨 Features Overview
+## Features Overview
 
 ### Public Landing Page
 - Modern, animated landing page
@@ -424,14 +424,14 @@ For production, set these in your environment or use a `.env` file:
 - Social media links
 - Share buttons (Facebook, WhatsApp, LinkedIn, Twitter)
 
-## 📄 License
+## License
 
 This project is open source and available under the MIT License.
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 📞 Support
+## Support
 
 For issues and questions, please open an issue on GitHub.
