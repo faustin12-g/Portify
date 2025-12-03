@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Approved - Portfy</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9fafb;
+        }
+        .email-container {
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .icon {
+            width: 60px;
+            height: 60px;
+            background: #10b981;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        .icon svg {
+            width: 36px;
+            height: 36px;
+            color: white;
+        }
+        h1 {
+            color: #1f2937;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .content {
+            color: #6b7280;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="logo">Portfy</div>
+            <div class="icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h1>Account Approved!</h1>
+        </div>
+        
+        <div class="content">
+            <p>Hello {{ user.first_name|default:user.username }},</p>
+            
+            <p>Great news! Your account has been reviewed and <strong>approved</strong> by our admin team.</p>
+            
+            <p>You can now access your dashboard and start building your portfolio!</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{ login_url }}" class="cta-button">Access Your Dashboard</a>
+            </div>
+            
+            <p>Once you log in, you'll be able to:</p>
+            <ul style="color: #6b7280; margin-left: 20px;">
+                <li>Add your projects, skills, and experience</li>
+                <li>Customize your portfolio</li>
+                <li>Generate your unique portfolio URL</li>
+                <li>Share your portfolio with the world</li>
+            </ul>
+            
+            <p style="margin-top: 20px;">If you have any questions, feel free to reach out to our support team.</p>
+            
+            <p>Welcome to Portfy!</p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; {{ current_year }} Portfy. All rights reserved.</p>
+            <p>This is an automated email. Please do not reply.</p>
+        </div>
+    </div>
+</body>
+</html>
+

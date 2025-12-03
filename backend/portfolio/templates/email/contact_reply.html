@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reply to Your Message - Portfy</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9fafb;
+        }
+        .email-container {
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .icon {
+            width: 60px;
+            height: 60px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        .icon svg {
+            width: 36px;
+            height: 36px;
+            color: white;
+        }
+        h1 {
+            color: #1f2937;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .content {
+            color: #6b7280;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+        .message-box {
+            background: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        .message-box h3 {
+            color: #1f2937;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 12px;
+        }
+        .message-box p {
+            color: #4b5563;
+            white-space: pre-wrap;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .reply-box {
+            background: #ecfdf5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #10b981;
+        }
+        .reply-box h3 {
+            color: #1f2937;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 0;
+            margin-bottom: 12px;
+        }
+        .reply-box p {
+            color: #065f46;
+            white-space: pre-wrap;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="logo">Portfy</div>
+            <div class="icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+            </div>
+            <h1>Reply to Your Message</h1>
+        </div>
+        
+        <div class="content">
+            <p>Hello <strong>{{ message_name }}</strong>,</p>
+            
+            <p>Thank you for reaching out to us. We have received your message and here is our reply:</p>
+            
+            <div class="message-box">
+                <h3>Your Original Message:</h3>
+                <p>{{ original_message }}</p>
+            </div>
+            
+            <div class="reply-box">
+                <h3>Our Reply:</h3>
+                <p>{{ reply_text }}</p>
+            </div>
+            
+            <p style="margin-top: 20px;">If you have any further questions, please don't hesitate to contact us again.</p>
+        </div>
+        
+        <div class="footer">
+            <p>Best regards,<br>
+            <strong>Portfy Team</strong></p>
+            <p style="font-size: 11px; color: #999; margin-top: 10px;">
+                This is an automated response. Please do not reply directly to this email.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

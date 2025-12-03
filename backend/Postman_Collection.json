@@ -1,0 +1,463 @@
+{
+	"info": {
+		"name": "Portfolio API",
+		"description": "Complete API collection for Portfolio CMS",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login (Username)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"access_token\", jsonData.access);",
+									"    pm.environment.set(\"refresh_token\", jsonData.refresh);",
+									"    console.log(\"Access token saved:\", jsonData.access);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username_or_email\": \"peace\",\n  \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "login", ""]
+						}
+					}
+				},
+				{
+					"name": "Login (Email)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username_or_email\": \"peace@gmail.com\",\n  \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "login", ""]
+						}
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/refresh/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "refresh", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "About Me",
+			"item": [
+				{
+					"name": "Get All About Me",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/about/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "about", ""]
+						}
+					}
+				},
+				{
+					"name": "Get Single About Me",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/about/1/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "about", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Create About Me",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Doe\",\n  \"title\": \"Full Stack Developer\",\n  \"bio\": \"Passionate developer with 5+ years of experience\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/about/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "about", ""]
+						}
+					}
+				},
+				{
+					"name": "Update About Me",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Doe\",\n  \"title\": \"Senior Full Stack Developer\",\n  \"bio\": \"Updated bio with more experience\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/about/1/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "about", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Delete About Me",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/about/1/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "about", "1", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Projects",
+			"item": [
+				{
+					"name": "Get All Projects",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/projects/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "projects", ""]
+						}
+					}
+				},
+				{
+					"name": "Get Single Project",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/projects/1/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "projects", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Create Project",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"E-Commerce Platform\",\n  \"description\": \"A full-stack e-commerce solution\",\n  \"github_link\": \"https://github.com/user/repo\",\n  \"live_demo_link\": \"https://example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/projects/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "projects", ""]
+						}
+					}
+				},
+				{
+					"name": "Update Project",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Updated Project Title\",\n  \"description\": \"Updated description\",\n  \"github_link\": \"https://github.com/user/updated-repo\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/projects/1/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "projects", "1", ""]
+						}
+					}
+				},
+				{
+					"name": "Delete Project",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/projects/1/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "projects", "1", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Experience",
+			"item": [
+				{
+					"name": "Get All Experience",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/experience/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "experience", ""]
+						}
+					}
+				},
+				{
+					"name": "Create Experience",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"role\": \"Senior Developer\",\n  \"company\": \"Tech Corp\",\n  \"start_date\": \"2020-01-01\",\n  \"end_date\": \"2023-12-31\",\n  \"description\": \"Led development team\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/experience/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "experience", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Education",
+			"item": [
+				{
+					"name": "Get All Education",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/education/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "education", ""]
+						}
+					}
+				},
+				{
+					"name": "Create Education",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"institution\": \"University Name\",\n  \"degree\": \"Bachelor of Science\",\n  \"start_year\": 2016,\n  \"end_year\": 2020,\n  \"description\": \"Focused on software engineering\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/education/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "education", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Skills",
+			"item": [
+				{
+					"name": "Get All Skills",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/skills/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "skills", ""]
+						}
+					}
+				},
+				{
+					"name": "Create Skill",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Python\",\n  \"level\": \"Advanced\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/skills/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "skills", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Social Media",
+			"item": [
+				{
+					"name": "Get All Social Media",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/v1/social-media/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "social-media", ""]
+						}
+					}
+				},
+				{
+					"name": "Create Social Media",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"platform_name\": \"GitHub\",\n  \"url\": \"https://github.com/username\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/social-media/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "social-media", ""]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+
