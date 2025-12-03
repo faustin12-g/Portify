@@ -19,6 +19,7 @@ const AdminUsers = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterApproved, setFilterApproved] = useState('all');
+  const [approvingUserId, setApprovingUserId] = useState(null);
   
   // Pagination state
   const [page, setPage] = useState(1);
@@ -66,6 +67,7 @@ const AdminUsers = () => {
   };
 
   const handleApproveUser = async (userId, currentStatus) => {
+    setApprovingUserId(userId);
     try {
       await axiosClient.patch(`/auth/users/${userId}/approval/`, {
         is_approved: !currentStatus,
@@ -74,6 +76,8 @@ const AdminUsers = () => {
       fetchUsers(); // Refetch to update the list
     } catch (error) {
       toast.error(error.response?.data?.error || 'Error updating user status');
+    } finally {
+      setApprovingUserId(null);
     }
   };
 
@@ -370,13 +374,24 @@ const AdminUsers = () => {
                         {!user.is_staff && !user.is_superuser && (
                           <button
                             onClick={() => handleApproveUser(user.id, user.profile.is_approved)}
-                            className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                            disabled={approvingUserId === user.id}
+                            className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                               user.profile.is_approved
                                 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 hover:bg-yellow-200 dark:hover:bg-yellow-800'
                                 : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-800'
                             }`}
                           >
-                            {user.profile.is_approved ? 'Revoke' : 'Approve'}
+                            {approvingUserId === user.id ? (
+                              <>
+                                <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                {user.profile.is_approved ? 'Revoking...' : 'Approving...'}
+                              </>
+                            ) : (
+                              user.profile.is_approved ? 'Revoke' : 'Approve'
+                            )}
                           </button>
                         )}
                       </div>

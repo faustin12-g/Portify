@@ -27,6 +27,8 @@ const UserLayout = () => {
   const [logoImage, setLogoImage] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [portfolioUrl, setPortfolioUrl] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isTogglingPublish, setIsTogglingPublish] = useState(false);
   const { logout } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -67,6 +69,7 @@ const UserLayout = () => {
   };
 
   const handleGeneratePortfolio = async () => {
+    setIsGenerating(true);
     try {
       // Update profile to publish portfolio
       const response = await axiosClient.patch('/auth/profile/', {
@@ -80,10 +83,13 @@ const UserLayout = () => {
     } catch (error) {
       toast.error('Failed to publish portfolio');
       console.error('Error publishing portfolio:', error);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
   const handleTogglePublish = async () => {
+    setIsTogglingPublish(true);
     try {
       const newStatus = !userProfile?.portfolio_published;
       const response = await axiosClient.patch('/auth/profile/', {
@@ -94,6 +100,8 @@ const UserLayout = () => {
     } catch (error) {
       toast.error('Failed to update portfolio status');
       console.error('Error updating portfolio:', error);
+    } finally {
+      setIsTogglingPublish(false);
     }
   };
 
@@ -252,17 +260,39 @@ const UserLayout = () => {
                     </Link>
                     <button
                       onClick={handleTogglePublish}
-                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                      disabled={isTogglingPublish}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Unpublish
+                      {isTogglingPublish ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Unpublishing...
+                        </>
+                      ) : (
+                        'Unpublish'
+                      )}
                     </button>
                   </>
                 ) : (
                   <button
                     onClick={handleGeneratePortfolio}
-                    className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg hover:from-blue-700 hover:to-purple-700"
+                    disabled={isGenerating}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Generate Portfolio
+                    {isGenerating ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Publishing...
+                      </>
+                    ) : (
+                      'Generate Portfolio'
+                    )}
                   </button>
                 )}
               </div>
