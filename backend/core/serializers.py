@@ -66,6 +66,22 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 'no_active_account',
             )
 
+        # Check email verification (for all users except super admins)
+        if not self.user.is_superuser:
+            from portfolio.models import UserProfile
+            try:
+                profile = self.user.profile
+                if not profile.email_verified:
+                    raise AuthenticationFailed(
+                        'Please verify your email address before logging in. Check your inbox for the verification link.',
+                        'email_not_verified',
+                    )
+            except UserProfile.DoesNotExist:
+                raise AuthenticationFailed(
+                    'Account not properly set up. Please contact support.',
+                    'account_not_setup',
+                )
+
         # Check if user is approved (for regular users)
         if not self.user.is_superuser and not self.user.is_staff:
             from portfolio.models import UserProfile

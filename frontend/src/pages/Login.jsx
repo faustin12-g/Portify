@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import useAuthStore from '../auth/useAuthStore';
 import toast from 'react-hot-toast';
-import { EyeIcon, EyeSlashIcon, EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon, EnvelopeIcon, LockClosedIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -14,17 +14,23 @@ const Login = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [emailVerificationError, setEmailVerificationError] = useState(null);
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+    // Clear error when user starts typing
+    if (emailVerificationError) {
+      setEmailVerificationError(null);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setEmailVerificationError(null);
 
     try {
       const result = await login(formData.username_or_email, formData.password);
@@ -37,10 +43,25 @@ const Login = () => {
           navigate('/dashboard');
         }
       } else {
-        toast.error(result.error || 'Login failed');
+        // Check if error is about email verification
+        const errorMessage = result.error || '';
+        if (errorMessage.toLowerCase().includes('verify your email') || 
+            errorMessage.toLowerCase().includes('email verification') ||
+            errorMessage.toLowerCase().includes('email address')) {
+          setEmailVerificationError(errorMessage);
+        } else {
+          toast.error(errorMessage || 'Login failed');
+        }
       }
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Login failed. Please try again.');
+      const errorMessage = error.response?.data?.detail || 'Login failed. Please try again.';
+      if (errorMessage.toLowerCase().includes('verify your email') || 
+          errorMessage.toLowerCase().includes('email verification') ||
+          errorMessage.toLowerCase().includes('email address')) {
+        setEmailVerificationError(errorMessage);
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -68,6 +89,31 @@ const Login = () => {
             </Link>
           </p>
         </div>
+        {emailVerificationError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4"
+          >
+            <div className="flex items-start">
+              <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 mr-3 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-yellow-800 dark:text-yellow-200 mb-1">
+                  Email Verification Required
+                </h3>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-3">
+                  {emailVerificationError}
+                </p>
+                <div className="text-sm text-yellow-700 dark:text-yellow-300">
+                  <p className="mb-2">Please check your email inbox for the verification link.</p>
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                    If you didn't receive the email, check your spam folder or contact support.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
