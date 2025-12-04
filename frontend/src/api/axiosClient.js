@@ -36,7 +36,11 @@ axiosClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Don't try to refresh token for login/register endpoints (they return 401 on failure)
+    const isAuthEndpoint = originalRequest?.url?.includes('/auth/login/') || 
+                           originalRequest?.url?.includes('/auth/register/');
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
       try {
@@ -52,16 +56,14 @@ axiosClient.interceptors.response.use(
 
           return axiosClient(originalRequest);
         } else {
-          throw new Error('No refresh token');
+          // No refresh token - return original error instead of "No refresh token"
+          return Promise.reject(error);
         }
       } catch (refreshError) {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-        // Use window.location for a full page reload to clear state
-        if (window.location.pathname.startsWith('/admin')) {
-          window.location.href = '/admin/login';
-        }
-        return Promise.reject(refreshError);
+        // Return original error, not refresh error
+        return Promise.reject(error);
       }
     }
 

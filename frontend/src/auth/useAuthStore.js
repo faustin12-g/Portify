@@ -40,9 +40,21 @@ const useAuthStore = create(
           }
         } catch (error) {
           set({ isLoading: false });
+          // Extract error message - check multiple possible formats
+          let errorMessage = 'Login failed';
+          if (error.response?.data) {
+            // Try different error message formats
+            errorMessage = error.response.data.detail || 
+                          error.response.data.error || 
+                          error.response.data.message ||
+                          (typeof error.response.data === 'string' ? error.response.data : errorMessage);
+          } else if (error.message && !error.message.includes('refresh')) {
+            // Only use error.message if it's not about token refresh
+            errorMessage = error.message;
+          }
           return {
             success: false,
-            error: error.response?.data?.detail || error.message || 'Login failed',
+            error: errorMessage,
           };
         }
       },
