@@ -121,6 +121,7 @@ const UserLayout = () => {
     { name: 'Skills', href: '/dashboard/skills', icon: Cog6ToothIcon },
     { name: 'Social Media', href: '/dashboard/social-media', icon: ShareIcon },
     { name: 'Messages', href: '/dashboard/messages', icon: EnvelopeIcon },
+    { name: 'Logout', href: '#', icon: ArrowRightOnRectangleIcon, action: handleLogout, isLogout: true },
   ];
 
   return (
@@ -151,21 +152,42 @@ const UserLayout = () => {
                 </button>
               </div>
               <nav className="mt-4">
-                {navigation.map((item) => (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center px-4 py-3 text-sm font-medium ${
-                      location.pathname === item.href
-                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-2 border-blue-600'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    <item.icon className="mr-3 h-5 w-5" />
-                    {item.name}
-                  </Link>
-                ))}
+                {navigation.map((item) => {
+                  const isActive = location.pathname === item.href;
+                  const isLogout = item.isLogout;
+                  
+                  if (isLogout) {
+                    return (
+                      <button
+                        key={item.name}
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          item.action();
+                        }}
+                        className="flex items-center w-full px-4 py-3 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      >
+                        <item.icon className="mr-3 h-5 w-5" />
+                        {item.name}
+                      </button>
+                    );
+                  }
+                  
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center px-4 py-3 text-sm font-medium ${
+                        isActive
+                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-r-2 border-blue-600'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <item.icon className="mr-3 h-5 w-5" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
               </nav>
             </motion.div>
           </motion.div>
@@ -180,30 +202,39 @@ const UserLayout = () => {
           </div>
           <div className="flex flex-col flex-grow overflow-y-auto">
             <nav className="flex-1 px-2 py-4 space-y-1">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
-                    location.pathname === item.href
-                      ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  <item.icon className="mr-3 h-5 w-5" />
-                  {item.name}
-                </Link>
-              ))}
+              {navigation.map((item) => {
+                const isActive = location.pathname === item.href;
+                const isLogout = item.isLogout;
+                
+                if (isLogout) {
+                  return (
+                    <button
+                      key={item.name}
+                      onClick={item.action}
+                      className="flex items-center w-full px-4 py-3 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                    >
+                      <item.icon className="mr-3 h-5 w-5" />
+                      {item.name}
+                    </button>
+                  );
+                }
+                
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
+                      isActive
+                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <item.icon className="mr-3 h-5 w-5" />
+                    {item.name}
+                  </Link>
+                );
+              })}
             </nav>
-            <div className="px-4 py-4 border-t border-gray-200 dark:border-gray-700">
-              <button
-                onClick={handleLogout}
-                className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
-              >
-                <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5" />
-                Logout
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -218,7 +249,7 @@ const UserLayout = () => {
           >
             <Bars3Icon className="h-6 w-6" />
           </button>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 lg:gap-4">
             {userProfile && (
               <div className="hidden md:flex items-center gap-3 mr-4">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-semibold">
@@ -237,7 +268,7 @@ const UserLayout = () => {
               </div>
             )}
             {userProfile && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 {portfolioUrl && (
                   <button
                     onClick={copyPortfolioUrl}

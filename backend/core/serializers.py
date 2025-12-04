@@ -145,11 +145,19 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         
         # Create or get UserProfile (signal might have already created it)
         from portfolio.models import UserProfile
+        from django.utils import timezone
+        from datetime import timedelta
+        
         profile, created = UserProfile.objects.get_or_create(user=user)
         
-        # Always generate a new email verification token
-        profile.email_verification_token = secrets.token_urlsafe(32)
-        profile.save(update_fields=['email_verification_token'])
+        # Generate 6-digit OTP
+        import random
+        otp = str(random.randint(100000, 999999))
+        
+        # Set OTP and expiration (15 minutes from now)
+        profile.email_verification_token = otp
+        profile.email_verification_otp_expires = timezone.now() + timedelta(minutes=15)
+        profile.save(update_fields=['email_verification_token', 'email_verification_otp_expires'])
         
         return user
 

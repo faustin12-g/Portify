@@ -38,8 +38,8 @@ const Register = () => {
 
     try {
       await axiosClient.post('/auth/register/', formData);
-      toast.success('Registration successful! Please check your email to verify your account.');
-      navigate('/verify-email-sent');
+      toast.success('Registration successful! Please check your email for the verification code.');
+      navigate('/verify-email', { state: { email: formData.email } });
     } catch (error) {
       const errorMessage = error.response?.data?.username?.[0] || 
                           error.response?.data?.email?.[0] ||

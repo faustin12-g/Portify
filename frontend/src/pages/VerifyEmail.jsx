@@ -1,78 +1,143 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axiosClient from '../api/axiosClient';
 import { motion } from 'framer-motion';
-import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, XCircleIcon, EnvelopeIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import toast from 'react-hot-toast';
 
 const VerifyEmail = () => {
-  const { token } = useParams();
   const navigate = useNavigate();
-  const [status, setStatus] = useState('verifying'); // verifying, success, error
+  const location = useLocation();
+  const [email, setEmail] = useState(location.state?.email || '');
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [status, setStatus] = useState('input'); // input, verifying, success, error
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
 
-  useEffect(() => {
-    if (token) {
-      verifyEmail();
-    } else {
-      setStatus('error');
-      setMessage('Invalid verification link');
-    }
-  }, [token]);
-
-  const verifyEmail = async () => {
-    try {
-      // Don't encode - Django will handle it, and token_urlsafe tokens are already URL-safe
-      const response = await axiosClient.get(`/auth/verify-email/${token}/`, {
-        headers: {
-          'Accept': 'application/json',
-        },
-      });
-      
-      // Only set success if we get a 200 response
-      if (response.status === 200) {
-        setStatus('success');
-        // Check if this is a "already used" message
-        if (response.data.already_used) {
-          setMessage(response.data.message || 'This verification link has already been used. If your email was successfully verified, you can proceed to login.');
-        } else {
-          setMessage(response.data.message || 'Email verified successfully!');
-        }
-      } else {
-        setStatus('error');
-        setMessage(response.data.error || 'Verification failed. Please try again.');
-      }
-    } catch (error) {
-      // Check if it's a 400 but with a message about already used
-      if (error.response?.status === 400 && 
-          (error.response?.data?.message?.includes('already been used') || 
-           error.response?.data?.error?.includes('already been used'))) {
-        setStatus('success');
-        setMessage(error.response?.data?.message || error.response?.data?.error || 'This verification link has already been used. If your email was successfully verified, you can proceed to login.');
-      } else {
-        setStatus('error');
-        const errorMessage = error.response?.data?.error || 
-          error.response?.data?.detail ||
-          'Invalid or expired verification token. The link may have already been used or expired.';
-        setMessage(errorMessage);
-        console.error('Verification error:', {
-          status: error.response?.status,
-          data: error.response?.data,
-          message: error.message
-        });
-      }
+  const handleOtpChange = (index, value) => {
+    // Only allow numbers
+    if (value && !/^\d$/.test(value)) return;
+    
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+    
+    // Auto-focus next input
+    if (value && index < 5) {
+      const nextInput = document.getElementById(`otp-${index + 1}`);
+      if (nextInput) nextInput.focus();
     }
   };
 
-  if (status === 'verifying') {
+  const handleKeyDown = (index, e) => {
+    // Handle backspace
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-${index - 1}`);
+      if (prevInput) prevInput.focus();
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').trim();
+    if (/^\d{6}$/.test(pastedData)) {
+      const newOtp = pastedData.split('');
+      setOtp(newOtp);
+      // Focus last input
+      const lastInput = document.getElementById('otp-5');
+      if (lastInput) lastInput.focus();
+    }
+  };
+
+  const handleVerify = async (e) => {
+    e.preventDefault();
+    
+    if (!email) {
+      toast.error('Please enter your email address');
+      return;
+    }
+    
+    const otpCode = otp.join('');
+    if (otpCode.length !== 6) {
+      toast.error('Please enter the complete 6-digit OTP');
+      return;
+    }
+    
+    setLoading(true);
+    setStatus('verifying');
+    
+    try {
+      const response = await axiosClient.post('/auth/verify-email-otp/', {
+        email: email,
+        otp: otpCode,
+      });
+      
+      if (response.status === 200) {
+        setStatus('success');
+        setMessage(response.data.message || 'Email verified successfully!');
+        toast.success('Email verified successfully!');
+      }
+    } catch (error) {
+      setStatus('error');
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.detail ||
+                          'Verification failed. Please check your OTP and try again.';
+      setMessage(errorMessage);
+      toast.error(errorMessage);
+      // Reset OTP on error
+      setOtp(['', '', '', '', '', '']);
+      document.getElementById('otp-0')?.focus();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!email) {
+      toast.error('Please enter your email address');
+      return;
+    }
+    
+    setResending(true);
+    
+    try {
+      const response = await axiosClient.post('/auth/resend-verification-otp/', {
+        email: email,
+      });
+      
+      toast.success(response.data.message || 'Verification OTP has been sent to your email.');
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.detail ||
+                          'Failed to resend OTP. Please try again.';
+      toast.error(errorMessage);
+    } finally {
+      setResending(false);
+    }
+  };
+
+  if (status === 'success') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 py-12 px-4">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center"
         >
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Verifying your email...</p>
+          <div className="w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircleIcon className="w-12 h-12 text-green-600 dark:text-green-400" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+            Email Verified!
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">{message}</p>
+          <button
+            onClick={() => navigate('/login')}
+            className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all"
+          >
+            Go to Login
+          </button>
         </motion.div>
       </div>
     );
@@ -83,63 +148,96 @@ const VerifyEmail = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center"
+        className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8"
       >
-        {status === 'success' ? (
-          <>
-            <div className="w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircleIcon className="w-12 h-12 text-green-600 dark:text-green-400" />
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
+            <EnvelopeIcon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Verify Your Email
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Enter the 6-digit code sent to your email
+          </p>
+        </div>
+
+        <form onSubmit={handleVerify} className="space-y-6">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Email Address
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              placeholder="Enter your email"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Verification Code
+            </label>
+            <div className="flex gap-2 justify-center" onPaste={handlePaste}>
+              {otp.map((digit, index) => (
+                <input
+                  key={index}
+                  id={`otp-${index}`}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleOtpChange(index, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(index, e)}
+                  className="w-12 h-14 text-center text-2xl font-bold border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                />
+              ))}
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Email Verified!
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">{message}</p>
+          </div>
+
+          {status === 'error' && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <p className="text-sm text-red-700 dark:text-red-300">{message}</p>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading || otp.join('').length !== 6}
+            className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Verifying...' : 'Verify Email'}
+          </button>
+
+          <div className="text-center">
             <button
-              onClick={() => navigate('/login')}
-              className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all"
+              type="button"
+              onClick={handleResendOtp}
+              disabled={resending || !email}
+              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto"
             >
-              Go to Login
+              <ArrowPathIcon className={`w-4 h-4 ${resending ? 'animate-spin' : ''}`} />
+              {resending ? 'Sending...' : "Didn't receive code? Resend"}
             </button>
-          </>
-        ) : (
-          <>
-            <div className="w-20 h-20 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-6">
-              <XCircleIcon className="w-12 h-12 text-red-600 dark:text-red-400" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Verification Failed
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">{message}</p>
-            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg mb-6 text-left">
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                <strong>Possible reasons:</strong>
-              </p>
-              <ul className="text-sm text-gray-700 dark:text-gray-300 mt-2 list-disc list-inside">
-                <li>The link has expired</li>
-                <li>The link has already been used</li>
-                <li>The link is invalid or corrupted</li>
-              </ul>
-            </div>
-            <div className="flex gap-4">
-              <button
-                onClick={() => navigate('/register')}
-                className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all"
-              >
-                Register Again
-              </button>
-              <button
-                onClick={() => navigate('/login')}
-                className="flex-1 px-6 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition-all"
-              >
-                Go to Login
-              </button>
-            </div>
-          </>
-        )}
+          </div>
+
+          <div className="text-center pt-4 border-t border-gray-200 dark:border-gray-700">
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+            >
+              Back to Login
+            </button>
+          </div>
+        </form>
       </motion.div>
     </div>
   );
 };
 
 export default VerifyEmail;
-

@@ -230,31 +230,40 @@ class RegisterView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         
-        # Send verification email
+        # Send verification OTP email
         try:
-            # Refresh profile from database to ensure we have the latest token
+            # Refresh profile from database to ensure we have the latest OTP
             profile = UserProfile.objects.get(user=user)
             
-            # Ensure token exists (should be set by serializer, but double-check)
-            if not profile.email_verification_token:
-                profile.email_verification_token = secrets.token_urlsafe(32)
+            # Ensure OTP exists (should be set by serializer, but double-check)
+            # If token exists but is not a 6-digit OTP, regenerate it
+            if not profile.email_verification_token or len(profile.email_verification_token) != 6 or not profile.email_verification_token.isdigit():
+                import random
+                from django.utils import timezone
+                from datetime import timedelta
+                otp = str(random.randint(100000, 999999))
+                profile.email_verification_token = otp
+                profile.email_verification_otp_expires = timezone.now() + timedelta(minutes=15)
                 profile.save()
+                logger.info(f"Generated new OTP for user {user.username}: {otp}")
             
-            # Verify token is not None before building URL
-            if profile.email_verification_token:
-                # Use frontend URL for verification link
-                frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
-                verification_url = f"{frontend_url}/verify-email/{profile.email_verification_token}"
-            else:
-                raise ValueError("Email verification token is None")
+            # Verify OTP is 6 digits
+            if len(profile.email_verification_token) != 6 or not profile.email_verification_token.isdigit():
+                logger.error(f"Invalid OTP format for user {user.username}: {profile.email_verification_token}")
+                raise ValueError("OTP must be a 6-digit number")
+            
+            # Send OTP via email
+            frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
             
             html_message = render_to_string('email/verification.html', {
                 'user': user,
-                'verification_url': verification_url,
+                'otp': profile.email_verification_token,
                 'frontend_url': frontend_url,
             })
-            plain_message = strip_tags(html_message)
+            plain_message = f"Your email verification code is: {profile.email_verification_token}\n\nThis code will expire in 15 minutes.\n\nIf you didn't request this, please ignore this email."
             
+            logger.info(f"Sending OTP email to {user.email} with OTP: {profile.email_verification_token}")
+                
             send_mail(
                 subject='Verify Your Email - Portfy',
                 message=plain_message,
@@ -273,107 +282,129 @@ class RegisterView(generics.CreateAPIView):
         }, status=status.HTTP_201_CREATED)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([permissions.AllowAny])
-def verify_email(request, token):
-    """Verify user email - returns JSON for API calls, HTML for direct browser access"""
-    from urllib.parse import unquote
+def verify_email_otp(request):
+    """Verify user email using OTP"""
+    otp = request.data.get('otp')
+    email = request.data.get('email')
     
-    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
-    
-    # Check if this is an API call (Accept: application/json)
-    is_api_call = request.META.get('HTTP_ACCEPT', '').startswith('application/json')
-    
-    # URL decode the token in case it was encoded
-    token = unquote(token)
-    
-    # Log the token for debugging
-    logger.info(f"Email verification attempt - Token: {token[:20]}..., Is API call: {is_api_call}")
-    
-    # Check if token is None or empty
-    if not token or token == 'None' or token.lower() == 'none':
-        logger.warning(f"Empty or None token received")
-        if is_api_call:
-            return Response({
-                'error': 'Invalid or expired verification token.'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        return render(request, 'email/verification_failed.html', {
-            'frontend_url': frontend_url
-        }, status=400)
+    if not otp or not email:
+        return Response({
+            'error': 'OTP and email are required.'
+        }, status=status.HTTP_400_BAD_REQUEST)
     
     try:
-        # Try to find the profile with this token
-        profile = UserProfile.objects.get(email_verification_token=token)
-        logger.info(f"Token found for user: {profile.user.username}")
+        user = User.objects.get(email=email)
+        profile = user.profile
         
         # Check if email is already verified
         if profile.email_verified:
-            logger.info(f"Email already verified for user: {profile.user.username}")
-            if is_api_call:
-                return Response({
-                    'message': 'Your email has already been verified. You can proceed to login.'
-                }, status=status.HTTP_200_OK)
-            return render(request, 'email/verification_success.html', {
-                'frontend_url': frontend_url
-            }, status=200)
+            return Response({
+                'message': 'Your email has already been verified. You can proceed to login.',
+                'already_verified': True
+            }, status=status.HTTP_200_OK)
         
-        # Set email as verified
+        # Check if OTP matches
+        if profile.email_verification_token != otp:
+            return Response({
+                'error': 'Invalid OTP. Please check the code and try again.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if OTP has expired
+        from django.utils import timezone
+        if profile.email_verification_otp_expires and profile.email_verification_otp_expires < timezone.now():
+            return Response({
+                'error': 'OTP has expired. Please request a new one.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Verify email
         profile.email_verified = True
-        profile.email_verification_token = None  # Clear token after verification
-        profile.save(update_fields=['email_verified', 'email_verification_token'])
+        profile.email_verification_token = None  # Clear OTP after verification
+        profile.email_verification_otp_expires = None
+        profile.save(update_fields=['email_verified', 'email_verification_token', 'email_verification_otp_expires'])
         
-        # Verify the save worked
-        profile.refresh_from_db()
-        if not profile.email_verified:
-            logger.error(f"Failed to save email_verified=True for user: {profile.user.username}")
-            raise Exception("Failed to update email verification status")
+        logger.info(f"Email verified successfully for user: {user.username}")
         
-        logger.info(f"Email verified successfully for user: {profile.user.username} - email_verified={profile.email_verified}")
+        return Response({
+            'message': 'Email verified successfully! Your account is pending admin approval.'
+        }, status=status.HTTP_200_OK)
         
-        if is_api_call:
-            return Response({
-                'message': 'Email verified successfully! Your account is pending admin approval.'
-            }, status=status.HTTP_200_OK)
-        
-        return render(request, 'email/verification_success.html', {
-            'frontend_url': frontend_url
-        }, status=200)
-    except UserProfile.DoesNotExist:
-        logger.warning(f"Token not found in database: {token[:20]}...")
-        
-        # Token doesn't exist - this could mean:
-        # 1. Token was already used (email should be verified)
-        # 2. Token never existed or expired (email not verified)
-        
-        # Try to find if there's a user with this email that's already verified
-        # We can't match by token, but we can check recently verified users
-        # However, a better approach: Check if there are any users verified in the last hour
-        # But we can't identify which user without the token...
-        
-        # Actually, the best approach: Since the token was cleared after verification,
-        # if someone clicks the link again, their email is likely already verified.
-        # We should return a helpful message suggesting they check their status or try logging in.
-        # But we can't guarantee it, so we'll return a message that's helpful but not misleading.
-        
-        if is_api_call:
-            return Response({
-                'message': 'This verification link has already been used. If your email was successfully verified, you can proceed to login. If not, please contact support.',
-                'already_used': True,
-                'suggestion': 'Try logging in to check if your email is verified.'
-            }, status=status.HTTP_200_OK)
-        return render(request, 'email/verification_success.html', {
-            'frontend_url': frontend_url,
-            'message': 'This verification link has already been used. If your email was successfully verified, you can proceed to login.'
-        }, status=200)
+    except User.DoesNotExist:
+        return Response({
+            'error': 'User with this email not found.'
+        }, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        logger.error(f"Error verifying email: {str(e)}", exc_info=True)
-        if is_api_call:
+        logger.error(f"Error verifying email OTP: {str(e)}", exc_info=True)
+        return Response({
+            'error': 'An error occurred while verifying your email. Please try again later.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def resend_verification_otp(request):
+    """Resend verification OTP to user's email"""
+    email = request.data.get('email')
+    
+    if not email:
+        return Response({
+            'error': 'Email is required.'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        user = User.objects.get(email=email)
+        profile = user.profile
+        
+        # Check if already verified
+        if profile.email_verified:
             return Response({
-                'error': 'An error occurred while verifying your email. Please try again later.'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        return render(request, 'email/verification_failed.html', {
-            'frontend_url': frontend_url
-        }, status=500)
+                'message': 'Your email is already verified. You can proceed to login.'
+            }, status=status.HTTP_200_OK)
+        
+        # Generate new OTP
+        import random
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        otp = str(random.randint(100000, 999999))
+        profile.email_verification_token = otp
+        profile.email_verification_otp_expires = timezone.now() + timedelta(minutes=15)
+        profile.save(update_fields=['email_verification_token', 'email_verification_otp_expires'])
+        
+        # Send OTP via email
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        
+        html_message = render_to_string('email/verification.html', {
+            'user': user,
+            'otp': otp,
+            'frontend_url': frontend_url,
+        })
+        plain_message = f"Your email verification code is: {otp}\n\nThis code will expire in 15 minutes.\n\nIf you didn't request this, please ignore this email."
+        
+        send_mail(
+            subject='Verify Your Email - Portfy',
+            message=plain_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        
+        return Response({
+            'message': 'Verification OTP has been sent to your email.'
+        }, status=status.HTTP_200_OK)
+        
+    except User.DoesNotExist:
+        # Don't reveal if email exists
+        return Response({
+            'message': 'If an account exists with this email, a verification OTP has been sent.'
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error resending verification OTP: {str(e)}", exc_info=True)
+        return Response({
+            'error': 'An error occurred while sending the verification OTP. Please try again later.'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])

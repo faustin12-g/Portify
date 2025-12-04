@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import (
     RegisterView,
-    verify_email,
+    verify_email_otp,
+    resend_verification_otp,
     password_reset_request,
     password_reset_confirm,
     UserProfileView,
@@ -16,7 +17,8 @@ from .views import (
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
-    path('verify-email/<str:token>/', verify_email, name='verify-email'),
+    path('verify-email-otp/', verify_email_otp, name='verify-email-otp'),
+    path('resend-verification-otp/', resend_verification_otp, name='resend-verification-otp'),
     path('password-reset/', password_reset_request, name='password-reset-request'),
     path('password-reset/<str:token>/', password_reset_confirm, name='password-reset-confirm'),
     path('profile/', UserProfileView.as_view(), name='user-profile'),
